@@ -1,0 +1,14 @@
+{
+  "name": "discord-reply-watchdog",
+  "version": "1.0.0",
+  "description": "Claude Code Discord plugin with stuck-task reply watchdog",
+  "main": "src/server.ts",
+  "scripts": {
+    "start": "bun src/server.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "discord.js": "^14.0.0",
+    "zod": "^3.22.0"
+  }
+}
