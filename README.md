@@ -2,6 +2,7 @@
 
 A drop-in Discord channel plugin for Claude Code that adds one feature the stock plugin lacks: **a stuck-task watchdog** that reminds Claude to reply when it takes a Discord message but doesn't respond.
 
+
 > Part of [The Agent Crafting Table](https://github.com/Agent-Crafting-Table) — standalone agent system components for Claude Code.
 
 ## The Problem
