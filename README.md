@@ -5,6 +5,69 @@ A drop-in Discord channel plugin for Claude Code that adds one feature the stock
 
 > Part of [The Agent Crafting Table](https://github.com/Agent-Crafting-Table) — standalone agent system components for Claude Code.
 
+## How It Works
+
+```mermaid
+sequenceDiagram
+    participant D as Discord
+    participant P as Plugin (server.ts)
+    participant AC as Access Control
+    participant CL as Claude Code
+    participant WD as Watchdog Timer
+
+    D->>P: Inbound message
+    P->>AC: Check allowlist
+    alt denied
+        AC-->>D: no response
+    else allowed
+        AC->>P: pass
+        P->>CL: forward message to Claude context
+        P->>WD: start pendingReply timer
+
+        alt Claude replies within 90s
+            CL->>P: discord:reply tool called
+            P->>D: post reply (pings user)
+            P->>WD: clear pendingReply
+        else 90s passes, no reply
+            WD->>CL: inject soft reminder
+"you received a message, have you replied?"
+            alt Claude replies within 5 min
+                CL->>P: discord:reply tool called
+                P->>D: post reply
+                P->>WD: clear pendingReply
+            else 5 min passes
+                WD->>CL: inject hard escalation
+"the user is still waiting — call discord:reply NOW"
+            end
+        end
+    end
+```
+
+```mermaid
+flowchart LR
+    subgraph "Single-Session vs Fleet"
+        SS["discord-reply-watchdog
+single session
+in-memory state
+clears on restart"]
+        FL["fleet-discord
+multi-session
+file-based state
+survives restarts
+includes this watchdog"]
+    end
+
+    USE["Use watchdog when:
+one Claude instance,
+one Discord bot"]
+    USEFL["Use fleet when:
+multiple Claude instances
+sharing one bot"]
+
+    USE --> SS
+    USEFL --> FL
+```
+
 ## The Problem
 
 Claude Code wins a Discord message, starts working on it, and then... forgets to call `discord:reply`. The user sits waiting. No response, no error — just silence.
@@ -14,16 +77,6 @@ The watchdog fixes this with synthetic reminders injected directly into Claude's
 - **5 minutes**: hard escalation — "the user is still waiting, call `discord:reply` now"
 
 Reminders are cleared the moment `discord:reply` fires. If Claude replies in 89 seconds, nobody sees anything.
-
-## How It Works
-
-When an inbound Discord message passes access control, the plugin sets an in-memory `pendingReply` state. A 15s interval checks whether the reply has landed:
-
-- If `reply` tool is called → `pendingReply` is cleared, watchdog stops
-- If 90s passes without a reply → synthetic `notifications/claude/channel` notification is injected into Claude's MCP stream with the original `chat_id` and `message_id`, reminding Claude which message needs a response
-- If 5 minutes passes → second injection with stronger language
-
-The reminder goes through the same channel as real messages, so Claude sees it as a high-priority instruction in context.
 
 ## Setup
 
