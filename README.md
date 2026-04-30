@@ -1,3 +1,4 @@
+9e838d68e10be229e7f8df31879ceedef359eeab
 # discord-reply-watchdog
 
 A drop-in Discord channel plugin for Claude Code that adds one feature the stock plugin lacks: **a stuck-task watchdog** that reminds Claude to reply when it takes a Discord message but doesn't respond.
@@ -29,15 +30,13 @@ sequenceDiagram
             P->>D: post reply (pings user)
             P->>WD: clear pendingReply
         else 90s passes, no reply
-            WD->>CL: inject soft reminder
-"you received a message, have you replied?"
+            WD->>CL: inject soft reminder - you received a message, have you replied?
             alt Claude replies within 5 min
                 CL->>P: discord:reply tool called
                 P->>D: post reply
                 P->>WD: clear pendingReply
             else 5 min passes
-                WD->>CL: inject hard escalation
-"the user is still waiting — call discord:reply NOW"
+                WD->>CL: inject hard escalation - the user is still waiting, call discord:reply NOW
             end
         end
     end
@@ -163,3 +162,5 @@ discord-reply-watchdog/
 ├── package.json
 └── README.md
 ```
+
+---
